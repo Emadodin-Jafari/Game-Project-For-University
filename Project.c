@@ -1,10 +1,39 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-int main(void){
-    int  n, m , adI , adJ ,shadyCount,surveyorCount, wallCount ;
-    char orientation;
-    char board[23][23]={'\0'};
-    //shady='!' , surveyor='?' , treasure='$';
+
+int checkDistance(char board[][23],char from, int rows , int columns , int x , int y){
+    for (int i = x-2; i <= x+2 ; i++) {
+        if(i<0) i++;
+        if(i>2*rows - 1) break;
+        for (int j = y-2; j <= y+2; j++) {
+            if(j<0) j++;
+            if(j>2*columns - 1) break;
+            if(board[i][j]== from) return 0;
+        }
+    }
+    return 1;
+}
+
+void printBoard(char board[][23], int rows, int columns) {
+    for (int i = 0; i < 2*rows-1; i++) {
+        printf("\n");
+        for (int j = 0; j < 2*columns-1; j++) {
+            printf("%c " , board[i][j]);
+        }
+    }
+}
+int generateRandNum(int min, int max) {
+    return (rand() % (max - min + 1)) + min;
+}
+int main(){
+    int  n, m , adI , adJ ,shadyCount,playerCount, wallCount, orientation ;
+    char horizontalWall = 205; // ═
+    char verticalWall = 186; // ║
+    char board[23][23]={'\0'};  // Create Board
+    srand(time(NULL));
+    //player='Ø' , surveyor='¤' , treasure='$';
     printf("Please Enter n and m: ");
     scanf(" %d %d", &n , &m);
 
@@ -20,42 +49,58 @@ int main(void){
     printf("Please Enter shady count: ");
     scanf(" %d", &shadyCount);
     for (int i = 0; i < shadyCount;i++) {
-        printf("Please Enter Shady Address: ");
-        scanf(" %d %d" , &adI , &adJ);
-        board[2*adI][2*adJ]='!';
+        adI = generateRandNum(0,n - 1);
+        adJ = generateRandNum(0,m - 1);
+        if(board[2*adI][2*adJ]!='\0'){
+            i--;
+            continue;
+        }
+        board[2*adI][2*adJ]=153; //Ø
     }
 
-    printf("Please Enter surveyor Count: ");
-    scanf(" %d", &surveyorCount);
-    for (int i = 0; i < surveyorCount;i++) {
-        printf("Please Enter surveyor Address: ");
-        scanf(" %d %d" , &adI , &adJ);
-        board[2*adI][2*adJ]='?';
+    printf("Please Enter player Count: ");
+    scanf(" %d", &playerCount);
+    for (int i = 0; i < playerCount;i++) {
+        adI = generateRandNum(0,n - 1);
+        adJ = generateRandNum(0,m - 1);
+        if(board[2*adI][2*adJ]!='\0'|| !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ )){
+            i--;
+            continue;
+        }
+        board[2*adI][2*adJ]=164; //¤
     }
 
-    printf("Please Enter Treasure Address: ");
-    scanf(" %d %d" , &adI , &adJ);
+    do {
+        adI = generateRandNum(0,n - 1);
+        adJ = generateRandNum(0,m - 1);
+    } while (board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ ) || !checkDistance(board, 164 ,n , m, 2*adI, 2*adJ ));
     board[2*adI][2*adJ]='$';
 
-    printf("Please Enter Walls count: ");
+    printf("Please Enter Walls count: "); // Create Walls
     scanf(" %d",&wallCount);
     for (int i = 0 ; i < wallCount ; i++) {
-        printf("Please Enter Wall address: ");
-        scanf(" %d %d %c" , &adI , &adJ,&orientation);
-        if(orientation=='V') board[adI][adJ+1]=186; // ║
-        else if(orientation=='H') board[adI+1][adJ]=179; // ═
-    }
-
-    for (int i = 0; i < 2*n-1; i++) {
-        printf("\n");
-        for (int j = 0; j < 2*m-1; j++) {
-            printf("%c " , board[i][j]);
+        adI = generateRandNum(0,n - 1);
+        adJ = generateRandNum(0,m - 1);
+        orientation = generateRandNum(0,1);
+        if(orientation== 1) {
+            if(board[2*adI][2*adJ+1] == verticalWall || adJ == m - 1){
+                i--;
+                continue;
+            }
+            board[2 * adI][2 * adJ + 1] = verticalWall;
+        }
+        else if(orientation== 0)  {
+            if(board[2*adI+1][2*adJ] == horizontalWall || adI == n - 1){
+                i--;
+                continue;
+            }
+            board[2*adI+1][2*adJ]= horizontalWall;
+            //printf("%d %d %d\n",adI,adJ,orientation);
         }
     }
 
+    printBoard(board, n, m);
     getchar();
     getchar();
     return 0;
 }
-
-
