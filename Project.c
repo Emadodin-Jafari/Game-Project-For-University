@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+<<<<<<< HEAD
 
 
 int checkDistance(char board[][23],char from, int rows , int columns , int x , int y){
@@ -16,6 +17,8 @@ int checkDistance(char board[][23],char from, int rows , int columns , int x , i
     return 1;
 }
 
+=======
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
 void printBoard(char board[][23], int rows, int columns) {
     for (int i = 0; i < 2*rows-1; i++) {
         printf("\n");
@@ -63,7 +66,11 @@ int main(){
     for (int i = 0; i < playerCount;i++) {
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
+<<<<<<< HEAD
         if(board[2*adI][2*adJ]!='\0'|| !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ )){
+=======
+        if(board[2*adI][2*adJ]!='\0'){
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
             i--;
             continue;
         }
@@ -73,29 +80,50 @@ int main(){
     do {
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
+<<<<<<< HEAD
     } while (board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ ) || !checkDistance(board, 164 ,n , m, 2*adI, 2*adJ ));
+=======
+    } while (board[2*adI][2*adJ]!='\0');
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
     board[2*adI][2*adJ]='$';
 
     printf("Please Enter Walls count: "); // Create Walls
     scanf(" %d",&wallCount);
     for (int i = 0 ; i < wallCount ; i++) {
+<<<<<<< HEAD
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
         orientation = generateRandNum(0,1);
         if(orientation== 1) {
             if(board[2*adI][2*adJ+1] == verticalWall || adJ == m - 1){
+=======
+       adI = generateRandNum(0,n - 1);
+        adJ = generateRandNum(0,m - 1);
+        orientation = generateRandNum(0,1);
+        if(orientation== 1) {
+            if(board[2*adI][2*adJ+1] == verticalWall ){
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
                 i--;
                 continue;
             }
             board[2 * adI][2 * adJ + 1] = verticalWall;
+<<<<<<< HEAD
         }
         else if(orientation== 0)  {
             if(board[2*adI+1][2*adJ] == horizontalWall || adI == n - 1){
+=======
+            }
+        else if(orientation== 0)  {
+            if(board[2*adI+1][2*adJ] == horizontalWall ){
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
                 i--;
                 continue;
             }
             board[2*adI+1][2*adJ]= horizontalWall;
+<<<<<<< HEAD
             //printf("%d %d %d\n",adI,adJ,orientation);
+=======
+>>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
         }
     }
 
