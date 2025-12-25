@@ -1,7 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-<<<<<<< HEAD
+
+
+
+
+void DFSCheck(char board[][23], int visited[][23],
+              int rows, int columns, int x, int y)
+{
+    char horizontalWall = 205; // ═
+    char verticalWall = 186; // ║
+    visited[x][y] = 1;
+
+    // Right
+    if (y+2 < 2*columns - 1 && !visited[x][y+2] &&
+        board[x][y+1] != verticalWall)
+        DFSCheck(board, visited, rows, columns, x, y+2);
+
+    // Left
+    if (y-2 >= 0 && !visited[x][y-2] &&
+        board[x][y-1] != verticalWall)
+        DFSCheck(board, visited, rows, columns, x, y-2);
+
+    // Up
+    if (x+2 < 2*rows - 1 && !visited[x+2][y] &&
+        board[x+1][y] != horizontalWall)
+        DFSCheck(board, visited, rows, columns, x+2, y);
+
+    // Down
+    if (x-2 >= 0 && !visited[x-2][y] &&
+        board[x-1][y] != horizontalWall)
+        DFSCheck(board, visited, rows, columns, x-2, y);
+}
+
+int isBoardConnected(char board[][23], int n, int m)
+{
+    int visited[23][23] = {0};
+
+    DFSCheck(board, visited, n, m, 0, 0);
+
+    for (int i = 0; i < 2*n-1; i+=2)
+        for (int j = 0; j < 2*m-1; j+=2)
+            if (!visited[i][j])
+                return 0;
+
+    return 1;
+}
+
 
 
 int checkDistance(char board[][23],char from, int rows , int columns , int x , int y){
@@ -17,9 +62,9 @@ int checkDistance(char board[][23],char from, int rows , int columns , int x , i
     return 1;
 }
 
-=======
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
 void printBoard(char board[][23], int rows, int columns) {
+    char horizontalWall = 205; // ═
+    char verticalWall = 186; // ║
     for (int i = 0; i < 2*rows-1; i++) {
         printf("\n");
         for (int j = 0; j < 2*columns-1; j++) {
@@ -66,11 +111,7 @@ int main(){
     for (int i = 0; i < playerCount;i++) {
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
-<<<<<<< HEAD
-        if(board[2*adI][2*adJ]!='\0'|| !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ )){
-=======
-        if(board[2*adI][2*adJ]!='\0'){
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
+        if(board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ )){
             i--;
             continue;
         }
@@ -80,50 +121,48 @@ int main(){
     do {
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
-<<<<<<< HEAD
     } while (board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ ) || !checkDistance(board, 164 ,n , m, 2*adI, 2*adJ ));
-=======
-    } while (board[2*adI][2*adJ]!='\0');
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
     board[2*adI][2*adJ]='$';
 
     printf("Please Enter Walls count: "); // Create Walls
     scanf(" %d",&wallCount);
+
+    int maxWalls = (n-1)*(m-1);
+    while(wallCount > maxWalls){
+        printf("More than max walls. please enter again less than %d: " , maxWalls+1);
+        scanf(" %d",&wallCount);
+
+    }
     for (int i = 0 ; i < wallCount ; i++) {
-<<<<<<< HEAD
         adI = generateRandNum(0,n - 1);
         adJ = generateRandNum(0,m - 1);
         orientation = generateRandNum(0,1);
+
         if(orientation== 1) {
             if(board[2*adI][2*adJ+1] == verticalWall || adJ == m - 1){
-=======
-       adI = generateRandNum(0,n - 1);
-        adJ = generateRandNum(0,m - 1);
-        orientation = generateRandNum(0,1);
-        if(orientation== 1) {
-            if(board[2*adI][2*adJ+1] == verticalWall ){
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
                 i--;
                 continue;
             }
             board[2 * adI][2 * adJ + 1] = verticalWall;
-<<<<<<< HEAD
+            if (!isBoardConnected(board, n , m)){
+                board[2 * adI][2 * adJ + 1] = 179; // │
+                i--;
+                continue;
+            }
         }
+
+
         else if(orientation== 0)  {
             if(board[2*adI+1][2*adJ] == horizontalWall || adI == n - 1){
-=======
-            }
-        else if(orientation== 0)  {
-            if(board[2*adI+1][2*adJ] == horizontalWall ){
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
                 i--;
                 continue;
             }
             board[2*adI+1][2*adJ]= horizontalWall;
-<<<<<<< HEAD
-            //printf("%d %d %d\n",adI,adJ,orientation);
-=======
->>>>>>> d50b0cb4a014477cab0485c30323d335df8265d4
+            if (!isBoardConnected(board, n , m)){
+                board[2 * adI+1][2 * adJ] = 196; // ─
+                i--;
+                continue;
+            }
         }
     }
 
