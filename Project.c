@@ -1,173 +1,405 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <conio.h>
+#include <windows.h>
+#include <math.h>
 
-
-
-
-void DFSCheck(char board[][23], int visited[][23],
-              int rows, int columns, int x, int y)
-{
+void DFSCheck(char board[][23], int visited[][23], int rows, int columns, int x, int y) {
     char horizontalWall = 205; // ═
     char verticalWall = 186; // ║
     visited[x][y] = 1;
-
     // Right
-    if (y+2 < 2*columns - 1 && !visited[x][y+2] &&
-        board[x][y+1] != verticalWall)
-        DFSCheck(board, visited, rows, columns, x, y+2);
-
+    if (y + 2 < 2 * columns - 1 && !visited[x][y + 2] && board[x][y + 1] != verticalWall)
+        DFSCheck(board, visited, rows, columns, x, y + 2);
     // Left
-    if (y-2 >= 0 && !visited[x][y-2] &&
-        board[x][y-1] != verticalWall)
-        DFSCheck(board, visited, rows, columns, x, y-2);
-
-    // Up
-    if (x+2 < 2*rows - 1 && !visited[x+2][y] &&
-        board[x+1][y] != horizontalWall)
-        DFSCheck(board, visited, rows, columns, x+2, y);
-
+    if (y - 2 >= 0 && !visited[x][y - 2] && board[x][y - 1] != verticalWall)
+        DFSCheck(board, visited, rows, columns, x, y - 2);
     // Down
-    if (x-2 >= 0 && !visited[x-2][y] &&
-        board[x-1][y] != horizontalWall)
-        DFSCheck(board, visited, rows, columns, x-2, y);
+    if (x + 2 < 2 * rows - 1 && !visited[x + 2][y] && board[x + 1][y] != horizontalWall)
+        DFSCheck(board, visited, rows, columns, x + 2, y);
+    // Up
+    if (x - 2 >= 0 && !visited[x - 2][y] && board[x - 1][y] != horizontalWall)
+        DFSCheck(board, visited, rows, columns, x - 2, y);
 }
 
-int isBoardConnected(char board[][23], int n, int m)
-{
-    int visited[23][23] = {0};
-
+int isBoardConnected(char board[][23], int n, int m) {
+    int visited[23][23] = { 0 };
     DFSCheck(board, visited, n, m, 0, 0);
-
-    for (int i = 0; i < 2*n-1; i+=2)
-        for (int j = 0; j < 2*m-1; j+=2)
+    for (int i = 0; i < 2 * n - 1; i += 2)
+        for (int j = 0; j < 2 * m - 1; j += 2)
             if (!visited[i][j])
                 return 0;
-
     return 1;
 }
 
-
-
-int checkDistance(char board[][23],char from, int rows , int columns , int x , int y){
-    for (int i = x-2; i <= x+2 ; i++) {
-        if(i<0) i++;
-        if(i>2*rows - 1) break;
-        for (int j = y-2; j <= y+2; j++) {
-            if(j<0) j++;
-            if(j>2*columns - 1) break;
-            if(board[i][j]== from) return 0;
+int checkDistance(char board[][23], char from, int rows, int columns, int x, int y) {
+    for (int i = x - 2; i <= x + 2; i++) {
+        if (i < 0) continue;
+        if (i >= 2 * rows - 1) break;
+        for (int j = y - 2; j <= y + 2; j++) {
+            if (j < 0) continue;
+            if (j >= 2 * columns - 1) break;
+            if (board[i][j] == from) return 0;
         }
     }
     return 1;
 }
 
 void printBoard(char board[][23], int rows, int columns) {
-    char horizontalWall = 205; // ═
-    char verticalWall = 186; // ║
-    for (int i = 0; i < 2*rows-1; i++) {
-        printf("\n");
-        for (int j = 0; j < 2*columns-1; j++) {
-            printf("%c " , board[i][j]);
+    for (int i = 0; i < 2 * rows - 1; i++) {
+        for (int j = 0; j < 2 * columns - 1; j++) {
+            printf("%c", board[i][j]);
         }
+        printf("\n");
     }
 }
+
 int generateRandNum(int min, int max) {
     return (rand() % (max - min + 1)) + min;
 }
-int main(){
-    int  n, m , adI , adJ ,shadyCount,playerCount, wallCount, orientation ;
+
+void gotoxy(int x, int y) {
+    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD cursorCoord;
+    cursorCoord.X = y; 
+    cursorCoord.Y = x; 
+    SetConsoleCursorPosition(consoleHandle, cursorCoord);
+}
+
+void clearScreen() {
+    system("cls");
+}
+
+void clearMessage(int n) {
+    gotoxy(2 * n + 1, 0);
+    printf("                    "); 
+}
+
+int findNearestRunner(int hunterX , int hunterY , int Runner[][2] , int runnerCount){
+    int minDistance = 1000000;
+    int index = -1;
+
+    for (int i = 0; i < runnerCount; i++) {
+        int distance = abs(hunterX - Runner[i][0]) + abs(hunterY - Runner[i][1]);
+        if (distance < minDistance) {
+            minDistance = distance;
+            index = i;
+        }
+    }
+    return index;
+}
+
+void deleteRunner(int runnerCoordinates[][2] , int runnerCount , int x , int y){
+    int i;
+    for (i = 0; x!= runnerCoordinates[i][0] || y!= runnerCoordinates[i][1]; i++);
+    for(;i<runnerCount ; i++){
+        runnerCoordinates[i][0]=runnerCoordinates[i+1][0];
+        runnerCoordinates[i][1]=runnerCoordinates[i+1][1];
+    }
+}
+
+int main() {
+    int n, m, adI, adJ, wallCount, orientation, hunterCount, runnerCount, treasureX, treasureY , winNumber;
+    int hunterCoordinates[10][2]={{0}} , runnerCoordinates[10][2]={{0}};
+    int Win = 0, Lose = -1;
     char horizontalWall = 205; // ═
-    char verticalWall = 186; // ║
-    char board[23][23]={'\0'};  // Create Board
+    char verticalWall = 186;   // ║
+    char board[23][23] = { '\0' };
+    char runner = 'R';
+    char hunter = 'H';
+    char treasure = '$';
+
     srand(time(NULL));
-    //player='Ø' , surveyor='¤' , treasure='$';
-    printf("Please Enter n and m: ");
-    scanf(" %d %d", &n , &m);
 
-    for (int i = 0; i < 2*n -1; i++) {
-        for (int j = 0; j < 2*m - 1; j++) {
-            if(i%2==1 && j%2==0) board[i][j]=196; // ─
-            else if(i%2==1 && j%2==1) board[i][j]=197; // ┼
-            else if(i%2==0 && j%2==1) board[i][j]=179; // │
+    
+    printf("Please enter number of rows and columns (Max 12 12): ");
+    scanf(" %d %d", &n, &m);
+
+    if (n > 12) n = 12; if (m > 12) m = 12;
+    if (n < 2) n = 2;   if (m < 2) m = 2;
+
+    
+    for (int i = 0; i < 2 * n - 1; i++) { // Create Board
+        for (int j = 0; j < 2 * m - 1; j++) {
+            if (i % 2 == 1 && j % 2 == 0) board[i][j] = 196;      // ─
+            else if (i % 2 == 1 && j % 2 == 1) board[i][j] = 197; // ┼
+            else if (i % 2 == 0 && j % 2 == 1) board[i][j] = 179; // │
+            else board[i][j] = ' ';
         }
-
     }
 
-    printf("Please Enter shady count: ");
-    scanf(" %d", &shadyCount);
-    for (int i = 0; i < shadyCount;i++) {
-        adI = generateRandNum(0,n - 1);
-        adJ = generateRandNum(0,m - 1);
-        if(board[2*adI][2*adJ]!='\0'){
-            i--;
+   
+    printf("Please enter hunters' count: ");
+    scanf(" %d", &hunterCount);
+    for (int i = 0; i < hunterCount;) {
+        hunterCoordinates[i][0] = generateRandNum(0, n - 1);
+        hunterCoordinates[i][1] = generateRandNum(0, m - 1);
+        if (board[2 * hunterCoordinates[i][0]][2 * hunterCoordinates[i][1]] != ' ')
             continue;
-        }
-        board[2*adI][2*adJ]=153; //Ø
+
+        board[2 * hunterCoordinates[i][0]][2 * hunterCoordinates[i][1]] = hunter;
+        i++;
     }
 
-    printf("Please Enter player Count: ");
-    scanf(" %d", &playerCount);
-    for (int i = 0; i < playerCount;i++) {
-        adI = generateRandNum(0,n - 1);
-        adJ = generateRandNum(0,m - 1);
-        if(board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ )){
-            i--;
+    printf("Please enter runners' Count: ");
+    scanf(" %d", &runnerCount);
+    winNumber =  runnerCount/3;
+    for (int i = 0; i < runnerCount;) {
+        runnerCoordinates[i][0] = generateRandNum(0, n - 1);
+        runnerCoordinates[i][1] = generateRandNum(0, m - 1);
+        if (board[2 * runnerCoordinates[i][0]][2 * runnerCoordinates[i][1]] != ' ' ||
+            !checkDistance(board, hunter, n, m, 2 * runnerCoordinates[i][0], 2 * runnerCoordinates[i][1]))
             continue;
-        }
-        board[2*adI][2*adJ]=164; //¤
+
+        board[2 * runnerCoordinates[i][0]][2 * runnerCoordinates[i][1]] = runner;
+        i++;
     }
 
     do {
-        adI = generateRandNum(0,n - 1);
-        adJ = generateRandNum(0,m - 1);
-    } while (board[2*adI][2*adJ]!='\0' || !checkDistance(board, 153 ,n , m, 2*adI, 2*adJ ) || !checkDistance(board, 164 ,n , m, 2*adI, 2*adJ ));
-    board[2*adI][2*adJ]='$';
+        treasureX = generateRandNum(0, n - 1);
+        treasureY = generateRandNum(0, m - 1);
+    } while (board[2 * treasureX][2 * treasureY] != ' ' ||
+        !checkDistance(board, hunter, n, m, 2 * treasureX, 2 * treasureY) ||
+        !checkDistance(board, runner, n, m, 2 * treasureX, 2 * treasureY));
 
-    printf("Please Enter Walls count: "); // Create Walls
-    scanf(" %d",&wallCount);
+    board[2 * treasureX][2 * treasureY] = treasure;
 
-    int maxWalls = (n-1)*(m-1);
-    while(wallCount > maxWalls){
-        printf("More than max walls. please enter again less than %d: " , maxWalls+1);
-        scanf(" %d",&wallCount);
 
+    printf("Please Enter Walls' count: "); // Create Walls
+    scanf(" %d", &wallCount);
+
+    int maxWalls = (n - 1) * (m - 1);
+    while (wallCount > maxWalls) {
+        printf("The entered number of walls is more than max number of walls. Please enter a number less than %d: ", maxWalls + 1);
+        scanf(" %d", &wallCount);
     }
-    for (int i = 0 ; i < wallCount ; i++) {
-        adI = generateRandNum(0,n - 1);
-        adJ = generateRandNum(0,m - 1);
-        orientation = generateRandNum(0,1);
+    for (int i = 0; i < wallCount; i++) {
+        adI = generateRandNum(0, n - 1);
+        adJ = generateRandNum(0, m - 1);
+        orientation = generateRandNum(0, 1);
 
-        if(orientation== 1) {
-            if(board[2*adI][2*adJ+1] == verticalWall || adJ == m - 1){
-                i--;
-                continue;
+        if (orientation == 1) {
+            if (adJ == m - 1 || board[2 * adI][2 * adJ + 1] == verticalWall) {
+                i--; continue;
             }
             board[2 * adI][2 * adJ + 1] = verticalWall;
-            if (!isBoardConnected(board, n , m)){
-                board[2 * adI][2 * adJ + 1] = 179; // │
-                i--;
-                continue;
+            if (!isBoardConnected(board, n, m)) {
+                board[2 * adI][2 * adJ + 1] = 179;  // │ (remove wall)
+                i--; continue;
             }
         }
-
-
-        else if(orientation== 0)  {
-            if(board[2*adI+1][2*adJ] == horizontalWall || adI == n - 1){
-                i--;
-                continue;
+        else {
+            if (adI == n - 1 || board[2 * adI + 1][2 * adJ] == horizontalWall) {
+                i--; continue;
             }
-            board[2*adI+1][2*adJ]= horizontalWall;
-            if (!isBoardConnected(board, n , m)){
-                board[2 * adI+1][2 * adJ] = 196; // ─
-                i--;
-                continue;
+            board[2 * adI + 1][2 * adJ] = horizontalWall;
+            if (!isBoardConnected(board, n, m)) {
+                board[2 * adI + 1][2 * adJ] = 196; // ─ (remove wall)
+                i--; continue;
             }
         }
     }
 
-    printBoard(board, n, m);
-    getchar();
+    clearScreen();
+    printBoard(board, n, m);//end of board creation
+
+    int turn = 0;
+    do {
+        if (turn == 0) {
+            for (int l = 0; l < runnerCount; l++) {
+                gotoxy(2*runnerCoordinates[l][0] , 2* runnerCoordinates[l][1]);
+
+
+                int runnerMove = getch();
+                int moved = 0;
+                int invalid = 0;
+
+                if (runnerMove == 0 || runnerMove == 224) {
+                    runnerMove = getch();
+                    switch (runnerMove) {
+                        case 72:  // Up
+                            if (2 * runnerCoordinates[l][0] - 2 >= 0 && board[2 * runnerCoordinates[l][0] - 1][2 * runnerCoordinates[l][1]] != horizontalWall && board[2 * runnerCoordinates[l][0] - 2][2 * runnerCoordinates[l][1]] != runner)  {
+                                board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1]] = ' ';
+                                gotoxy(2 * runnerCoordinates[l][0], 2 * runnerCoordinates[l][1]);
+                                printf(" ");
+                                runnerCoordinates[l][0] -= 1;
+                                moved = 1;
+                            } else invalid = 1;
+                            break;
+                        case 80: // Down
+                            if (2 * runnerCoordinates[l][0] + 2 <= 2 * n - 1 && board[2 * runnerCoordinates[l][0] + 1][2 * runnerCoordinates[l][1]] != horizontalWall && board[2 * runnerCoordinates[l][0] + 2][2 * runnerCoordinates[l][1]] != runner) {
+                                board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1]] = ' ';
+                                gotoxy(2 * runnerCoordinates[l][0], 2 * runnerCoordinates[l][1]);
+                                printf(" ");
+                                runnerCoordinates[l][0] += 1;
+                                moved = 1;
+                            } else invalid = 1;
+                            break;
+                        case 75: // Left
+                            if (2 * runnerCoordinates[l][1] - 2 >= 0 && board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1] - 1] != verticalWall && board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1] - 2] != runner) {
+                                board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1]] = ' ';
+                                gotoxy(2 * runnerCoordinates[l][0], 2 * runnerCoordinates[l][1]);
+                                printf(" ");
+                                runnerCoordinates[l][1] -= 1;
+                                moved = 1;
+                            } else invalid = 1;
+                            break;
+                        case 77: //Right
+                            if (2 * runnerCoordinates[l][1] + 2 <= 2 * m - 1 && board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1] + 1] != verticalWall && board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1] + 2] != runner) {
+                                board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1]] = ' ';
+                                gotoxy(2 * runnerCoordinates[l][0], 2 * runnerCoordinates[l][1]);
+                                printf(" ");
+                                runnerCoordinates[l][1] += 1;
+                                moved = 1;
+                            } else invalid = 1;
+                            break;
+                    }
+                } else if (runnerMove == 32) {
+                    moved = 1;
+                    clearMessage(n);
+                    gotoxy(2 * n + 1, 0);
+                    printf("Skipped Turn.");
+                }
+
+                if (moved) {
+                    clearMessage(n);
+                    board[2 * runnerCoordinates[l][0]][2 * runnerCoordinates[l][1]] = runner;
+                    gotoxy(2 * runnerCoordinates[l][0], 2 * runnerCoordinates[l][1]);
+                    printf("%c", runner);
+                    turn =1;
+                }
+                else if (invalid) {
+                    gotoxy(2 * n + 1, 0);
+                    printf("Invalid Move! ");
+                    l--;
+                }
+
+                if (board[2*treasureX][2*treasureY] == runner){
+                    Win++;
+                    deleteRunner(runnerCoordinates , runnerCount , treasureX , treasureY);
+                    runnerCount--;
+                    board[2*treasureX][2*treasureY] = treasure;
+                    gotoxy(2*treasureX , 2*treasureY);
+                    printf("%c" , treasure);
+                }
+
+                if (Win == winNumber ){
+                    clearMessage(n);
+                    gotoxy(2 * n + 2, 0);
+                    printf("You Win!\n");
+                    break;
+                }
+                if (hunterCoordinates[l][0] == runnerCoordinates[l][0] && hunterCoordinates[l][1] == runnerCoordinates[l][1]){
+                    deleteRunner(runnerCoordinates , runnerCount , runnerCoordinates[l][0] , runnerCoordinates[l][1]);
+                    runnerCount--;
+                    board[2*hunterCoordinates[l][0]][2*hunterCoordinates[l][1]] = hunter;
+                    gotoxy(2*hunterCoordinates[l][0] , 2*hunterCoordinates[l][1]);
+                    printf("%c" , hunter);
+                }
+            }
+        }
+        if(Win == winNumber) {
+            break;
+        }
+        else if (turn == 1) {
+            Sleep(200);
+            for (int p = 0; p < hunterCount; p++) {
+
+
+                for (int k = 0; k < 2; k++) {
+                    int movedStep = 0;
+                    int index = findNearestRunner(hunterCoordinates[p][0] , hunterCoordinates[p][1] , runnerCoordinates , runnerCount);
+                    int runnerX , runnerY;
+                    runnerX = runnerCoordinates[index][0];
+                    runnerY = runnerCoordinates[index][1];
+                    int dy = runnerY - hunterCoordinates[p][1];
+                    int dx = runnerX - hunterCoordinates[p][0];
+
+                    if (dy != 0) {
+                        if (dy > 0) {
+                            if (board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] + 1] != verticalWall &&
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] + 2] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
+                                gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
+                                printf(" ");
+                                hunterCoordinates[p][1]++;
+                                movedStep = 1;
+                            }
+                        } else {
+                            if (board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] - 1] != verticalWall &&
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] - 2] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
+                                gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
+                                printf(" ");
+                                hunterCoordinates[p][1]--;
+                                movedStep = 1;
+                            }
+                        }
+                    }
+                    if (!movedStep && dx != 0) {
+                        if (dx > 0) {
+                            if (board[2 * hunterCoordinates[p][0] + 1][2 * hunterCoordinates[p][1]] != horizontalWall &&
+                                board[2 * hunterCoordinates[p][0] + 2][2 * hunterCoordinates[p][1]] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
+                                gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
+                                printf(" ");
+                                hunterCoordinates[p][0]++;
+                                movedStep = 1;
+                            }
+                        } else {
+                            if (board[2 * hunterCoordinates[p][0] - 1][2 * hunterCoordinates[p][1]] != horizontalWall &&
+                                board[2 * hunterCoordinates[p][0] - 2][2 * hunterCoordinates[p][1]] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
+                                gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
+                                printf(" ");
+                                hunterCoordinates[p][0]--;
+                                movedStep = 1;
+                            }
+                        }
+                    }
+
+                    board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = hunter;
+                    gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
+                    printf("%c", hunter);
+
+                    if (hunterCoordinates[p][0] == runnerX && hunterCoordinates[p][1] == runnerY) {
+                        deleteRunner(runnerCoordinates , runnerCount , runnerX , runnerY);
+                        runnerCount--;
+
+                        if(runnerCount == 0){
+                            Lose = 1;
+                            break;
+                        }
+                    }
+                    if (movedStep) Sleep(150);
+                }
+                turn = 0;
+
+                if(runnerCount == 0){
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < hunterCount && Lose!=1; i++) {
+            for (int j = 0; j < runnerCount && Lose!=1; j++) {
+                if (hunterCoordinates[i][0] == runnerCoordinates[j][0] && hunterCoordinates[i][1] == runnerCoordinates[j][1]) Lose = 1;
+            }
+        }
+
+    } while (Win < winNumber && Lose == -1);
+
+    clearMessage(n);
+    gotoxy(2 * n + 2, 0);
+    if (Lose == 1) printf("You Lose!\n");
+
+
+
+
+
+
+    getchar(); 
     getchar();
     return 0;
 }
