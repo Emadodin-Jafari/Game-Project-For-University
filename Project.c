@@ -5,9 +5,43 @@
 #include <windows.h>
 #include <math.h>
 
+#define GREEN   2
+#define RED     4
+#define WHITE   7
+
+#define MAX_TEMP_WALLS 4
+
+char horizontalWall = 205; // ═
+char verticalWall = 186;   // ║
+
+typedef struct {
+    int x, y;
+    char orientation;
+    int life;
+} tempWall;
+
+
+int maxNumber(int a , int b){
+    if(a >= b) return(a);
+    else return(b);
+}
+
+int minNumber(int a , int b){
+    if(a <= b) return(a);
+    else return(b);
+}
+
+int maxWalls(int n , int m){
+    int num =  maxNumber(minNumber(n , m) , 1);
+    return(num);
+}
+
+
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+
 void DFSCheck(char board[][23], int visited[][23], int rows, int columns, int x, int y) {
-    char horizontalWall = 205; // ═
-    char verticalWall = 186; // ║
     visited[x][y] = 1;
     // Right
     if (y + 2 < 2 * columns - 1 && !visited[x][y + 2] && board[x][y + 1] != verticalWall)
@@ -49,7 +83,13 @@ int checkDistance(char board[][23], char from, int rows, int columns, int x, int
 void printBoard(char board[][23], int rows, int columns) {
     for (int i = 0; i < 2 * rows - 1; i++) {
         for (int j = 0; j < 2 * columns - 1; j++) {
-            printf("%c", board[i][j]);
+            if (board[i][j] == horizontalWall || board[i][j] == verticalWall) {
+                setColor(GREEN);
+                printf("%c", board[i][j]);
+                setColor(WHITE);
+            }
+            else {
+                printf("%c", board[i][j]);            }
         }
         printf("\n");
     }
@@ -99,22 +139,97 @@ void deleteRunner(int runnerCoordinates[][2] , int runnerCount , int x , int y){
     }
 }
 
-int main() {
-    int n, m, adI, adJ, wallCount, orientation, hunterCount, runnerCount, treasureX, treasureY , winNumber;
+int placeTempWall(int x, int y, char orientation , char board[][23] , int rows , int columns , tempWall tempWalls[][10] , int RunnerNumber , int RunnerWalls[] , int MaxWalls) {
+    int idx = RunnerWalls[RunnerNumber];
+        if(RunnerWalls[RunnerNumber] >= MaxWalls) return(-1);
+
+        if(orientation == 'V' || orientation=='v'){
+           if(board[2*x][2*y +1] == verticalWall) return(-2);
+           if(x >= rows || y >= columns -1 ) return(-3);
+            tempWalls[RunnerNumber][idx].x = x;
+            tempWalls[RunnerNumber][idx].y = y;
+            tempWalls[RunnerNumber][idx].orientation = orientation;
+            tempWalls[RunnerNumber][idx].life = 3;
+            board[2*x][2*y +1] = verticalWall;
+            gotoxy(2*x , 2*y +1);
+            setColor(RED);
+            printf("%c", board[2*x][2*y +1]);
+            setColor(WHITE);
+            RunnerWalls[RunnerNumber]++;
+        }
+        else if(orientation == 'H' || orientation=='h'){
+            if(board[2*x + 1][2*y] == horizontalWall) return(-2);
+            if(x >= rows -1 || y >= columns ) return(-3);
+            tempWalls[RunnerNumber][idx].x = x;
+            tempWalls[RunnerNumber][idx].y = y;
+            tempWalls[RunnerNumber][idx].orientation = orientation;
+            tempWalls[RunnerNumber][idx].life = 3;
+            board[2*x + 1][2*y ] = horizontalWall;
+            gotoxy(2*x + 1 , 2*y);
+            setColor(RED);
+            printf("%c", board[2*x + 1][2*y]);
+            setColor(WHITE);
+            RunnerWalls[RunnerNumber]++;
+        }
+    return 1;
+}
+void updateTempWalls(char board[][23], tempWall tempWalls[][10], int RunnerCount, int RunnerWalls[]) {
+    for (int r = 0; r < RunnerCount; r++) {
+
+        for (int i = 0; i < RunnerWalls[r]; i++) {
+
+            tempWalls[r][i].life--;
+
+            if (tempWalls[r][i].life <= 0) {
+
+                int x = tempWalls[r][i].x;
+                int y = tempWalls[r][i].y;
+
+                if (tempWalls[r][i].orientation == 'V' || tempWalls[r][i].orientation == 'v' ) {
+                    board[2*x][2*y + 1] = 179;
+                    gotoxy(2*x, 2*y + 1);
+                    printf("%c" , 179);
+                }
+                else if (tempWalls[r][i].orientation == 'H' || tempWalls[r][i].orientation == 'h') {
+                    board[2*x + 1][2*y] = 196;
+                    gotoxy(2*x + 1, 2*y);
+                    printf("%c" , 196);
+                }
+
+
+                for (int j = i; j < RunnerWalls[r] - 1; j++) {
+                    tempWalls[r][j] = tempWalls[r][j + 1];
+                }
+
+                RunnerWalls[r]--;
+                i--;
+            }
+        }
+    }
+}
+
+
+
+
+    int main() {
+    int n, m, adI, adJ, wallCount, orientation, hunterCount, runnerCount, treasureX, treasureY , winNumber , MaxWalls;
     int hunterCoordinates[10][2]={{0}} , runnerCoordinates[10][2]={{0}};
+    int RunnerWalls[10]={0};
     int Win = 0, Lose = -1;
-    char horizontalWall = 205; // ═
-    char verticalWall = 186;   // ║
     char board[23][23] = { '\0' };
     char runner = 'R';
     char hunter = 'H';
     char treasure = '$';
+    tempWall TempWalls[10][MAX_TEMP_WALLS];
+    int tempWallCount= 0;
 
     srand(time(NULL));
 
     
     printf("Please enter number of rows and columns (Max 12 12): ");
     scanf(" %d %d", &n, &m);
+
+    MaxWalls = maxWalls(n , m);
 
     if (n > 12) n = 12; if (m > 12) m = 12;
     if (n < 2) n = 2;   if (m < 2) m = 2;
@@ -144,7 +259,8 @@ int main() {
 
     printf("Please enter runners' Count: ");
     scanf(" %d", &runnerCount);
-    winNumber =  runnerCount/3;
+    if(runnerCount % 3 == 0 ) winNumber = runnerCount/3;
+    else winNumber = (runnerCount/3) + 1;
     for (int i = 0; i < runnerCount;) {
         runnerCoordinates[i][0] = generateRandNum(0, n - 1);
         runnerCoordinates[i][1] = generateRandNum(0, m - 1);
@@ -261,6 +377,18 @@ int main() {
                     gotoxy(2 * n + 1, 0);
                     printf("Skipped Turn.");
                 }
+                else if( runnerMove == 'e' || runnerMove == 'E'){
+                    int x , y , result;
+                    char HOV;
+                    clearMessage(n);
+                    gotoxy(2 * n + 1, 0);
+                    do {
+                        printf("Enter wall coordinates: ");
+                        scanf("%d %d %c" , &x , &y , &HOV);
+                        result = placeTempWall(x , y , HOV , board , n , m , TempWalls , l , RunnerWalls , MaxWalls);
+                    }while(result != 1);
+                    turn = 1;
+                }
 
                 if (moved) {
                     clearMessage(n);
@@ -274,6 +402,7 @@ int main() {
                     printf("Invalid Move! ");
                     l--;
                 }
+
 
                 if (board[2*treasureX][2*treasureY] == runner){
                     Win++;
@@ -319,7 +448,8 @@ int main() {
                     if (dy != 0) {
                         if (dy > 0) {
                             if (board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] + 1] != verticalWall &&
-                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] + 2] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] + 2] != treasure &&
+                                board[2*hunterCoordinates[p][0]][2*hunterCoordinates[p][1] + 2] != hunter ) {
                                 board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
                                 gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
                                 printf(" ");
@@ -328,7 +458,8 @@ int main() {
                             }
                         } else {
                             if (board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] - 1] != verticalWall &&
-                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] - 2] != treasure) {
+                                board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1] - 2] != treasure &&
+                                board[2*hunterCoordinates[p][0]][2*hunterCoordinates[p][1] - 2] != hunter ) {
                                 board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
                                 gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
                                 printf(" ");
@@ -340,7 +471,8 @@ int main() {
                     if (!movedStep && dx != 0) {
                         if (dx > 0) {
                             if (board[2 * hunterCoordinates[p][0] + 1][2 * hunterCoordinates[p][1]] != horizontalWall &&
-                                board[2 * hunterCoordinates[p][0] + 2][2 * hunterCoordinates[p][1]] != treasure) {
+                                board[2 * hunterCoordinates[p][0] + 2][2 * hunterCoordinates[p][1]] != treasure &&
+                                board[2*hunterCoordinates[p][0] + 2][2*hunterCoordinates[p][1]] != hunter ) {
                                 board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
                                 gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
                                 printf(" ");
@@ -349,7 +481,8 @@ int main() {
                             }
                         } else {
                             if (board[2 * hunterCoordinates[p][0] - 1][2 * hunterCoordinates[p][1]] != horizontalWall &&
-                                board[2 * hunterCoordinates[p][0] - 2][2 * hunterCoordinates[p][1]] != treasure) {
+                                board[2 * hunterCoordinates[p][0] - 2][2 * hunterCoordinates[p][1]] != treasure &&
+                                board[2*hunterCoordinates[p][0] - 2][2*hunterCoordinates[p][1]] != hunter ) {
                                 board[2 * hunterCoordinates[p][0]][2 * hunterCoordinates[p][1]] = ' ';
                                 gotoxy(2 * hunterCoordinates[p][0], 2 * hunterCoordinates[p][1]);
                                 printf(" ");
@@ -388,6 +521,7 @@ int main() {
             }
         }
 
+        updateTempWalls(board , TempWalls , runnerCount , RunnerWalls);
     } while (Win < winNumber && Lose == -1);
 
     clearMessage(n);
